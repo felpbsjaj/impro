@@ -39,9 +39,9 @@ import {
   Banknote,
   CreditCard,
   Percent,
-  Mail,         // Ícone novo
-  Lock,         // Ícone novo
-  ArrowRight    // Ícone novo
+  Mail,         
+  Lock,         
+  ArrowRight    
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -382,15 +382,15 @@ export default function App() {
   // ==========================================
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0c0c0e] flex flex-col items-center justify-center gap-6">
+      <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
         <motion.img 
           src="/LOGO/barber_logo.png" 
           alt="Império" 
-          className="w-28 h-28 object-contain mix-blend-screen drop-shadow-[0_0_30px_rgba(200,168,75,0.5)]"
+          className="w-28 h-28 object-contain drop-shadow-[0_0_30px_rgba(223,185,66,0.3)]"
           animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="w-10 h-10 border-2 border-[#c8a84b]/20 border-t-[#c8a84b] rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-[#dfb942]/20 border-t-[#dfb942] rounded-full animate-spin" />
         <div className="text-zinc-500 text-[10px] uppercase tracking-[0.3em] font-bold">Carregando...</div>
       </div>
     );
@@ -398,106 +398,102 @@ export default function App() {
 
 
   // ==========================================
-  // NOVA TELA DE LOGIN PREMIUM
+  // NOVA TELA DE LOGIN PREMIUM (BASEADA NO CSS ENVIADO)
   // ==========================================
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-[#0c0c0e] font-sans">
+      <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#050505] font-sans">
         
-        {/* Fundos e Texturas */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_#15151a_0%,_#050508_100%)] z-0"></div>
-        <div 
-          className="absolute inset-0 opacity-[0.03] pointer-events-none z-0" 
-          style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}
-        ></div>
+        {/* Fundo sutil inspirado na 3ª foto */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_#050505_100%)] z-0"></div>
 
-        {/* Cartão de Login (Glassmorphism) */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative z-10 w-full max-w-4xl mx-4 flex flex-col md:flex-row bg-[#121216]/70 backdrop-blur-xl border border-[#c8a84b]/15 rounded-[2rem] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden"
-        >
-          {/* Lado Esquerdo: Logo e Branding */}
-          <div className="flex-1 p-10 md:p-14 flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-[#c8a84b]/10 bg-gradient-to-br from-[#c8a84b]/5 to-transparent">
-            <div className="relative mb-6">
-              <div className="absolute inset-0 bg-[#c8a84b] blur-[40px] opacity-20 rounded-full animate-pulse"></div>
-              <motion.img 
-                src="/LOGO/barber_logo.png" 
-                alt="Império Barbearia" 
-                className="w-36 h-36 md:w-44 md:h-44 object-contain relative z-10 mix-blend-screen drop-shadow-[0_0_20px_rgba(200,168,75,0.4)]"
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-              />
-            </div>
+        <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center">
+          
+          {/* Logo e Branding no topo */}
+          <div className="text-center mb-8 w-full">
+            <motion.img 
+              src="/LOGO/barber_logo.png" 
+              alt="Império Barbearia" 
+              className="w-32 h-32 mx-auto object-contain drop-shadow-[0_0_20px_rgba(223,185,66,0.3)] mb-4"
+              animate={{ y: [0, -8, 0] }}
+              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            />
             
-            {/* O Título usa fonte sans normal com peso alto para ficar elegante com a Inter */}
-            <h1 className="text-3xl md:text-4xl font-extrabold tracking-[0.25em] text-[#c8a84b] uppercase drop-shadow-[0_0_20px_rgba(200,168,75,0.2)]">
+            <h1 className="text-4xl md:text-5xl font-extrabold tracking-[0.2em] uppercase bg-gradient-to-br from-[#dfb942] to-[#f5de8c] bg-clip-text text-transparent leading-none">
               Império
             </h1>
-            <p className="mt-3 text-[#9b9690] text-[10px] md:text-xs tracking-[0.3em] uppercase font-bold">
+            <p className="mt-4 text-zinc-500 text-[11px] md:text-xs tracking-[0.25em] uppercase font-bold">
               Gestão Profissional
             </p>
           </div>
 
-          {/* Lado Direito: Formulário */}
-          <div className="flex-1 p-8 md:p-14 flex flex-col justify-center">
-            <h2 className="text-xl md:text-2xl font-bold text-[#eeeae0] mb-8 tracking-wide">
-              Acesso ao Sistema
+          {/* Cartão de Login (Glassmorphism Escuro) */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full bg-[#0f0f11]/90 backdrop-blur-xl border border-white/10 rounded-[20px] p-8 md:p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
+          >
+            <h2 className="text-2xl font-bold text-white mb-8 tracking-wide">
+              Acesse sua conta
             </h2>
 
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleLogin} className="space-y-6">
               
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#9b9690] uppercase tracking-widest block ml-1">E-mail</label>
-                <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4e4c48] group-focus-within:text-[#c8a84b] transition-colors" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 bg-[#0c0c0e]/80 border border-[#c8a84b]/10 rounded-xl text-[#eeeae0] placeholder-[#4e4c48] focus:outline-none focus:ring-1 focus:ring-[#c8a84b] focus:border-[#c8a84b] transition-all"
-                    placeholder="admin@imperio.com"
-                    required
-                  />
-                </div>
+                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block">
+                  E-mail
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-[10px] text-white placeholder-zinc-600 focus:outline-none focus:border-[#dfb942] focus:ring-1 focus:ring-[#dfb942]/30 transition-all text-sm"
+                  placeholder="seu@email.com"
+                  required
+                />
               </div>
 
               <div className="space-y-2">
-                <label className="text-[11px] font-bold text-[#9b9690] uppercase tracking-widest block ml-1">Senha</label>
-                <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#4e4c48] group-focus-within:text-[#c8a84b] transition-colors" />
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 bg-[#0c0c0e]/80 border border-[#c8a84b]/10 rounded-xl text-[#eeeae0] placeholder-[#4e4c48] focus:outline-none focus:ring-1 focus:ring-[#c8a84b] focus:border-[#c8a84b] transition-all"
-                    placeholder="••••••••"
-                    required
-                  />
-                </div>
+                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block">
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-[10px] text-white placeholder-zinc-600 focus:outline-none focus:border-[#dfb942] focus:ring-1 focus:ring-[#dfb942]/30 transition-all text-sm"
+                  placeholder="••••••••"
+                  required
+                />
               </div>
 
               {authError && (
                 <motion.div 
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-red-500/10 border border-red-500/20 text-red-500 p-3 rounded-xl text-xs flex items-center gap-2"
+                  className="text-[#ef4444] text-xs text-center font-medium bg-[#ef4444]/10 py-2 rounded-lg"
                 >
-                  <AlertCircle size={16} />
                   {authError}
                 </motion.div>
               )}
 
               <button
                 type="submit"
-                className="w-full mt-4 bg-[#c8a84b] hover:bg-[#dfc06e] text-[#0c0c0e] font-bold py-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-[#c8a84b]/20 flex justify-center items-center gap-2 group"
+                className="w-full mt-2 bg-gradient-to-br from-[#dfb942] to-[#f5de8c] text-black font-bold text-lg tracking-widest py-4 rounded-[10px] transition-all hover:translate-y-[-2px] shadow-[0_4px_14px_rgba(212,175,55,0.25)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.4)] flex justify-center items-center gap-2"
               >
-                <span>ENTRAR NO PAINEL</span>
-                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                <LogOut className="w-5 h-5 rotate-180" />
+                ENTRAR
               </button>
             </form>
-          </div>
-        </motion.div>
+
+            {/* Mensagem Universal de Segurança */}
+            <div className="mt-8 flex items-center justify-center gap-2 text-zinc-500 text-xs">
+              <Lock className="w-3.5 h-3.5" />
+              <span>Acesso seguro ao sistema</span>
+            </div>
+          </motion.div>
+          
+        </div>
       </div>
     );
   }
@@ -515,10 +511,10 @@ export default function App() {
           <img 
             src="/LOGO/barber_logo.png" 
             alt="Império" 
-            className="w-12 h-12 object-contain mix-blend-screen drop-shadow-[0_0_10px_rgba(200,168,75,0.4)] flex-shrink-0"
+            className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(223,185,66,0.3)] flex-shrink-0"
           />
           <div>
-            <div className="text-lg font-black text-amber-500 tracking-widest leading-tight">IMPÉRIO</div>
+            <div className="text-lg font-black text-[#dfb942] tracking-widest leading-tight">IMPÉRIO</div>
             <div className="text-[9px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Barbearia</div>
           </div>
         </div>
@@ -590,12 +586,12 @@ export default function App() {
 
         <div className="p-6 border-t border-white/5">
           <div className="bg-white/5 p-4 rounded-2xl flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-500 rounded-xl flex items-center justify-center text-black font-bold">
+            <div className="w-10 h-10 bg-[#dfb942] rounded-xl flex items-center justify-center text-black font-bold">
               {userData?.nome?.[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-white truncate">{userData?.nome}</div>
-              <div className="text-[10px] text-amber-500 uppercase font-bold">{userData?.role}</div>
+              <div className="text-[10px] text-[#dfb942] uppercase font-bold">{userData?.role}</div>
             </div>
             <button onClick={() => signOut(auth)} className="text-zinc-500 hover:text-red-500 transition-colors">
               <LogOut size={18} />
@@ -616,19 +612,19 @@ export default function App() {
             <div className="flex bg-zinc-900 rounded-xl p-1 border border-white/5">
               <button 
                 onClick={() => setDateRange({ start: hoje(), end: hoje() })}
-                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === hoje() ? "bg-amber-500 text-black" : "text-zinc-500 hover:text-white")}
+                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === hoje() ? "bg-[#dfb942] text-black" : "text-zinc-500 hover:text-white")}
               >
                 Hoje
               </button>
               <button 
                 onClick={() => setDateRange({ start: format(subDays(new Date(), 6), 'yyyy-MM-dd'), end: hoje() })}
-                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === format(subDays(new Date(), 6), 'yyyy-MM-dd') ? "bg-amber-500 text-black" : "text-zinc-500 hover:text-white")}
+                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === format(subDays(new Date(), 6), 'yyyy-MM-dd') ? "bg-[#dfb942] text-black" : "text-zinc-500 hover:text-white")}
               >
                 7 dias
               </button>
               <button 
                 onClick={() => setDateRange({ start: format(subDays(new Date(), 29), 'yyyy-MM-dd'), end: hoje() })}
-                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === format(subDays(new Date(), 29), 'yyyy-MM-dd') ? "bg-amber-500 text-black" : "text-zinc-500 hover:text-white")}
+                className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", dateRange.start === format(subDays(new Date(), 29), 'yyyy-MM-dd') ? "bg-[#dfb942] text-black" : "text-zinc-500 hover:text-white")}
               >
                 30 dias
               </button>
@@ -640,7 +636,7 @@ export default function App() {
                   if (activePage === 'barbeiros') setIsBarbeiroModalOpen(true);
                   else if (activePage === 'servicos') setIsServicoModalOpen(true);
                 }}
-                className="bg-amber-500 hover:bg-amber-400 text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-500/10"
+                className="bg-gradient-to-br from-[#dfb942] to-[#f5de8c] hover:opacity-90 text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#dfb942]/10"
               >
                 <Plus size={18} />
                 {activePage === 'barbeiros' ? 'NOVO BARBEIRO' : 'NOVO SERVIÇO'}
@@ -648,7 +644,7 @@ export default function App() {
             ) : (
               <button 
                 onClick={() => setIsRegModalOpen(true)}
-                className="bg-amber-500 hover:bg-amber-400 text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-amber-500/10"
+                className="bg-gradient-to-br from-[#dfb942] to-[#f5de8c] hover:opacity-90 text-black font-bold px-6 py-3 rounded-xl flex items-center gap-2 transition-all active:scale-95 shadow-lg shadow-[#dfb942]/10"
               >
                 <Plus size={18} />
                 REGISTRAR
@@ -666,7 +662,7 @@ export default function App() {
                   value={formatCurrency(userData?.role === 'admin' ? stats.totalFat : filteredRegistros.filter(r => r.barbeiroId === userData?.uid).reduce((acc, r) => acc + r.valorFinal, 0))} 
                   subValue={`${userData?.role === 'admin' ? stats.count : filteredRegistros.filter(r => r.barbeiroId === userData?.uid).length} serviços realizados`}
                   icon={TrendingUp}
-                  color="bg-amber-500/10 text-amber-500"
+                  color="bg-[#dfb942]/10 text-[#dfb942]"
                 />
                 <StatCard 
                   title={userData?.role === 'admin' ? "No seu bolso" : "Sua Comissão"} 
@@ -703,8 +699,8 @@ export default function App() {
                         <AreaChart data={chartData}>
                           <defs>
                             <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                              <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                              <stop offset="5%" stopColor="#dfb942" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#dfb942" stopOpacity={0}/>
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="#ffffff05" vertical={false} />
@@ -718,12 +714,12 @@ export default function App() {
                           <YAxis hide />
                           <Tooltip 
                             contentStyle={{ backgroundColor: '#18181b', border: '1px solid #ffffff10', borderRadius: '12px' }}
-                            itemStyle={{ color: '#f59e0b', fontWeight: 'bold' }}
+                            itemStyle={{ color: '#dfb942', fontWeight: 'bold' }}
                           />
                           <Area 
                             type="monotone" 
                             dataKey="value" 
-                            stroke="#f59e0b" 
+                            stroke="#dfb942" 
                             strokeWidth={3}
                             fillOpacity={1} 
                             fill="url(#colorValue)" 
@@ -748,7 +744,7 @@ export default function App() {
                               <div className="text-sm font-bold text-white truncate">{b.nome}</div>
                               <div className="text-[10px] text-zinc-500 uppercase">{b.sede}</div>
                             </div>
-                            <div className="text-sm font-bold text-amber-500">{formatCurrency(bFat)}</div>
+                            <div className="text-sm font-bold text-[#dfb942]">{formatCurrency(bFat)}</div>
                           </div>
                         );
                       })}
@@ -761,7 +757,7 @@ export default function App() {
                 <div className="p-8 border-b border-white/5 flex justify-between items-center">
                   <h3 className="text-lg font-bold text-white">{userData?.role === 'admin' ? 'Últimos Serviços' : 'Seus Últimos Serviços'}</h3>
                   {userData?.role === 'admin' && (
-                    <button onClick={() => setActivePage('relatorios')} className="text-xs font-bold text-amber-500 hover:underline">Ver todos</button>
+                    <button onClick={() => setActivePage('relatorios')} className="text-xs font-bold text-[#dfb942] hover:underline">Ver todos</button>
                   )}
                 </div>
                 <div className="overflow-x-auto">
@@ -795,7 +791,7 @@ export default function App() {
                           <td className="px-8 py-5">
                             <div className="flex items-center gap-2 text-xs">
                               {r.pagamento === 'Pix' && <QrCode size={14} className="text-emerald-500" />}
-                              {r.pagamento === 'Dinheiro' && <Banknote size={14} className="text-amber-500" />}
+                              {r.pagamento === 'Dinheiro' && <Banknote size={14} className="text-[#dfb942]" />}
                               {r.pagamento.includes('Cartão') && <CreditCard size={14} className="text-blue-500" />}
                               {r.pagamento}
                             </div>
@@ -812,7 +808,7 @@ export default function App() {
 
           {activePage === 'meus-cortes' && (
             <div className="max-w-4xl mx-auto space-y-8">
-              <div className="bg-gradient-to-br from-amber-500 to-amber-600 p-10 rounded-[2.5rem] text-black shadow-2xl shadow-amber-500/20">
+              <div className="bg-gradient-to-br from-[#dfb942] to-[#f5de8c] p-10 rounded-[2.5rem] text-black shadow-2xl shadow-[#dfb942]/20">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="text-xs font-black uppercase tracking-[0.2em] opacity-60 mb-2">Seus ganhos hoje</div>
@@ -835,9 +831,9 @@ export default function App() {
                       setSelectedServico(s);
                       setIsRegModalOpen(true);
                     }}
-                    className="bg-zinc-900 border border-white/5 p-6 rounded-3xl hover:border-amber-500/50 transition-all group text-left"
+                    className="bg-zinc-900 border border-white/5 p-6 rounded-3xl hover:border-[#dfb942]/50 transition-all group text-left"
                   >
-                    <div className="text-zinc-500 text-xs font-bold uppercase mb-1 group-hover:text-amber-500 transition-colors">{s.nome}</div>
+                    <div className="text-zinc-500 text-xs font-bold uppercase mb-1 group-hover:text-[#dfb942] transition-colors">{s.nome}</div>
                     <div className="text-2xl font-black text-white">{formatCurrency(s.valor)}</div>
                   </button>
                 ))}
@@ -849,7 +845,7 @@ export default function App() {
                   {registros.filter(r => r.barbeiroId === userData?.uid && r.data === hoje()).map(r => (
                     <div key={r.id} className="bg-zinc-900/50 border border-white/5 p-5 rounded-2xl flex justify-between items-center">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-zinc-800 rounded-xl flex items-center justify-center text-amber-500">
+                        <div className="w-12 h-12 bg-zinc-800 rounded-xl flex items-center justify-center text-[#dfb942]">
                           <Scissors size={20} />
                         </div>
                         <div>
@@ -885,30 +881,30 @@ export default function App() {
                 <div className="flex-1 space-y-3 w-full">
                   <label className="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-500 ml-1">Início do Período</label>
                   <div className="relative group">
-                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-500 transition-colors" size={18} />
+                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#dfb942] transition-colors" size={18} />
                     <input 
                       type="date" 
                       value={dateRange.start}
                       onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-[#dfb942] transition-all appearance-none"
                     />
                   </div>
                 </div>
                 <div className="flex-1 space-y-3 w-full">
                   <label className="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-500 ml-1">Fim do Período</label>
                   <div className="relative group">
-                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-500 transition-colors" size={18} />
+                    <CalendarIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#dfb942] transition-colors" size={18} />
                     <input 
                       type="date" 
                       value={dateRange.end}
                       onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-amber-500 transition-all appearance-none"
+                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-[#dfb942] transition-all appearance-none"
                     />
                   </div>
                 </div>
-                <div className="bg-amber-500/10 border border-amber-500/20 px-8 py-4 rounded-2xl flex flex-col justify-center min-w-[200px]">
-                  <div className="text-[10px] uppercase font-black text-amber-500/60 mb-1">Total no Período</div>
-                  <div className="text-2xl font-black text-amber-500">{formatCurrency(filteredRegistros.reduce((acc, r) => acc + r.valorFinal, 0))}</div>
+                <div className="bg-[#dfb942]/10 border border-[#dfb942]/20 px-8 py-4 rounded-2xl flex flex-col justify-center min-w-[200px]">
+                  <div className="text-[10px] uppercase font-black text-[#dfb942]/60 mb-1">Total no Período</div>
+                  <div className="text-2xl font-black text-[#dfb942]">{formatCurrency(filteredRegistros.reduce((acc, r) => acc + r.valorFinal, 0))}</div>
                 </div>
               </div>
 
@@ -923,7 +919,7 @@ export default function App() {
                     <div key={b.uid} className="bg-zinc-900/30 border border-white/5 p-8 rounded-[2.5rem]">
                       <div className="flex justify-between items-start mb-8">
                         <div className="flex items-center gap-4">
-                          <div className="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center text-black text-xl font-black">
+                          <div className="w-14 h-14 bg-[#dfb942] rounded-2xl flex items-center justify-center text-black text-xl font-black">
                             {b.nome[0]}
                           </div>
                           <div>
@@ -946,9 +942,9 @@ export default function App() {
                           <div className="text-[10px] text-emerald-500 uppercase font-bold mb-1">Barbeiro</div>
                           <div className="text-lg font-bold text-emerald-500">{formatCurrency(bComissao)}</div>
                         </div>
-                        <div className="bg-amber-500/5 p-4 rounded-2xl border border-amber-500/10">
-                          <div className="text-[10px] text-amber-500 uppercase font-bold mb-1">William</div>
-                          <div className="text-lg font-bold text-amber-500">{formatCurrency(bLucro)}</div>
+                        <div className="bg-[#dfb942]/5 p-4 rounded-2xl border border-[#dfb942]/10">
+                          <div className="text-[10px] text-[#dfb942] uppercase font-bold mb-1">William</div>
+                          <div className="text-lg font-bold text-[#dfb942]">{formatCurrency(bLucro)}</div>
                         </div>
                       </div>
                     </div>
@@ -962,7 +958,7 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {barbeiros.map(b => (
                 <div key={b.uid} className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2.5rem] relative overflow-hidden group">
-                  <div className="absolute top-0 left-0 w-full h-1 bg-amber-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute top-0 left-0 w-full h-1 bg-[#dfb942] opacity-0 group-hover:opacity-100 transition-opacity" />
                   <div className="flex items-center gap-4 mb-6">
                     <div className="w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center text-white text-2xl font-black">
                       {b.nome[0]}
@@ -974,7 +970,7 @@ export default function App() {
                   </div>
                   <div className="flex gap-2 mb-8">
                     <span className="bg-zinc-800 text-zinc-400 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">{b.sede}</span>
-                    <span className="bg-amber-500/10 text-amber-500 text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">{b.porcentagem}% Comissão</span>
+                    <span className="bg-[#dfb942]/10 text-[#dfb942] text-[10px] font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">{b.porcentagem}% Comissão</span>
                   </div>
                   <div className="flex gap-3">
                     <button 
@@ -1004,7 +1000,7 @@ export default function App() {
                 <div className="col-span-full text-center py-20 bg-zinc-900/30 rounded-[2.5rem] border border-dashed border-white/10">
                   <Users size={48} className="mx-auto text-zinc-800 mb-4" />
                   <div className="text-zinc-500">Nenhum barbeiro cadastrado</div>
-                  <button onClick={() => setIsBarbeiroModalOpen(true)} className="text-amber-500 font-bold mt-2 hover:underline">Adicionar agora</button>
+                  <button onClick={() => setIsBarbeiroModalOpen(true)} className="text-[#dfb942] font-bold mt-2 hover:underline">Adicionar agora</button>
                 </div>
               )}
             </div>
@@ -1014,11 +1010,11 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {servicos.map(s => (
                 <div key={s.id} className="bg-zinc-900/50 border border-white/5 p-8 rounded-[2.5rem] group">
-                  <div className="w-12 h-12 bg-amber-500/10 text-amber-500 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+                  <div className="w-12 h-12 bg-[#dfb942]/10 text-[#dfb942] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                     <Scissors size={24} />
                   </div>
                   <h4 className="text-lg font-bold text-white mb-1">{s.nome}</h4>
-                  <div className="text-3xl font-black text-amber-500 mb-8">{formatCurrency(s.valor)}</div>
+                  <div className="text-3xl font-black text-[#dfb942] mb-8">{formatCurrency(s.valor)}</div>
                   <div className="flex gap-3">
                     <button 
                       onClick={() => {
@@ -1047,7 +1043,7 @@ export default function App() {
                 <div className="col-span-full text-center py-20 bg-zinc-900/30 rounded-[2.5rem] border border-dashed border-white/10">
                   <Tags size={48} className="mx-auto text-zinc-800 mb-4" />
                   <div className="text-zinc-500">Nenhum serviço cadastrado</div>
-                  <button onClick={() => setIsServicoModalOpen(true)} className="text-amber-500 font-bold mt-2 hover:underline">Adicionar agora</button>
+                  <button onClick={() => setIsServicoModalOpen(true)} className="text-[#dfb942] font-bold mt-2 hover:underline">Adicionar agora</button>
                 </div>
               )}
             </div>
@@ -1077,7 +1073,7 @@ export default function App() {
                   className={cn(
                     "p-4 rounded-2xl border transition-all text-left group relative overflow-hidden",
                     selectedServico?.id === s.id 
-                      ? "bg-amber-500 border-amber-500 text-black" 
+                      ? "bg-[#dfb942] border-[#dfb942] text-black" 
                       : "bg-black/40 border-white/10 text-zinc-400 hover:border-white/20"
                   )}
                 >
@@ -1106,7 +1102,7 @@ export default function App() {
                   className={cn(
                     "flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all",
                     paymentMethod === method.id 
-                      ? "bg-amber-500 border-amber-500 text-black" 
+                      ? "bg-[#dfb942] border-[#dfb942] text-black" 
                       : "bg-black/40 border-white/10 text-zinc-500 hover:border-white/20"
                   )}
                 >
@@ -1121,12 +1117,12 @@ export default function App() {
             <div className="space-y-3">
               <label className="text-[10px] uppercase font-black tracking-[0.2em] text-zinc-500 ml-1">Desconto (R$)</label>
               <div className="relative group">
-                <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-amber-500 transition-colors" size={16} />
+                <Percent className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#dfb942] transition-colors" size={16} />
                 <input 
                   type="number" 
                   value={discount || ''}
                   onChange={(e) => setDiscount(Number(e.target.value))}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-amber-500 transition-all"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-[#dfb942] transition-all"
                   placeholder="0,00"
                 />
               </div>
@@ -1142,7 +1138,7 @@ export default function App() {
           <button 
             onClick={handleRegister}
             disabled={!selectedServico || !paymentMethod}
-            className="w-full bg-amber-500 hover:bg-amber-400 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl transition-all active:scale-95 shadow-xl shadow-amber-500/20 mt-4"
+            className="w-full bg-gradient-to-br from-[#dfb942] to-[#f5de8c] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-black font-black py-5 rounded-2xl transition-all active:scale-95 shadow-xl shadow-[#dfb942]/20 mt-4"
           >
             CONFIRMAR REGISTRO
           </button>
@@ -1165,7 +1161,7 @@ export default function App() {
               type="text" 
               value={barbForm.nome}
               onChange={(e) => setBarbForm(prev => ({ ...prev, nome: e.target.value }))}
-              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
               placeholder="Nome do barbeiro"
             />
           </div>
@@ -1177,7 +1173,7 @@ export default function App() {
                   type="email" 
                   value={barbForm.email}
                   onChange={(e) => setBarbForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
                   placeholder="barbeiro@imperio.com"
                 />
               </div>
@@ -1187,7 +1183,7 @@ export default function App() {
                   type="password" 
                   value={barbForm.password}
                   onChange={(e) => setBarbForm(prev => ({ ...prev, password: e.target.value }))}
-                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+                  className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
                   placeholder="Mínimo 6 caracteres"
                 />
               </div>
@@ -1199,7 +1195,7 @@ export default function App() {
               <select 
                 value={barbForm.sede}
                 onChange={(e) => setBarbForm(prev => ({ ...prev, sede: e.target.value }))}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
               >
                 <option value="Matriz">Matriz</option>
                 <option value="Sede 2">Sede 2</option>
@@ -1211,14 +1207,14 @@ export default function App() {
                 type="number" 
                 value={barbForm.porcentagem}
                 onChange={(e) => setBarbForm(prev => ({ ...prev, porcentagem: Number(e.target.value) }))}
-                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+                className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
                 placeholder="60"
               />
             </div>
           </div>
           <button 
             onClick={handleSaveBarbeiro}
-            className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-5 rounded-2xl transition-all shadow-lg shadow-amber-500/20"
+            className="w-full bg-gradient-to-br from-[#dfb942] to-[#f5de8c] hover:opacity-90 text-black font-bold py-5 rounded-2xl transition-all shadow-lg shadow-[#dfb942]/20"
           >
             {editingBarbeiro ? "SALVAR ALTERAÇÕES" : "CADASTRAR BARBEIRO"}
           </button>
@@ -1241,7 +1237,7 @@ export default function App() {
               type="text" 
               value={srvForm.nome}
               onChange={(e) => setSrvForm(prev => ({ ...prev, nome: e.target.value }))}
-              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
               placeholder="Ex: Corte + Barba"
             />
           </div>
@@ -1251,13 +1247,13 @@ export default function App() {
               type="number" 
               value={srvForm.valor}
               onChange={(e) => setSrvForm(prev => ({ ...prev, valor: Number(e.target.value) }))}
-              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-amber-500"
+              className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 text-white outline-none focus:border-[#dfb942]"
               placeholder="50,00"
             />
           </div>
           <button 
             onClick={handleSaveServico}
-            className="w-full bg-amber-500 hover:bg-amber-400 text-black font-bold py-5 rounded-2xl transition-all shadow-lg shadow-amber-500/20"
+            className="w-full bg-gradient-to-br from-[#dfb942] to-[#f5de8c] hover:opacity-90 text-black font-bold py-5 rounded-2xl transition-all shadow-lg shadow-[#dfb942]/20"
           >
             {editingServico ? "SALVAR ALTERAÇÕES" : "ADICIONAR SERVIÇO"}
           </button>
