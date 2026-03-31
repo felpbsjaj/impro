@@ -1,38 +1,21 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+/* 1. Importando a fonte Inter do Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* 2. Importando o Tailwind v4 */
 @import "tailwindcss";
 
+/* 3. Configurando a fonte padrão e as cores do seu tema */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-gold: #c8a84b;
+  --color-gold-light: #dfc06e;
 }
 
-:root {
-  color-scheme: dark;
-}
-
-body {
-  @apply bg-black text-zinc-300 antialiased selection:bg-amber-500/30 selection:text-amber-200;
-}
-
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-}
-
-::-webkit-scrollbar-track {
-  @apply bg-transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
-}
-
-/* Hide number input arrows */
-input::-webkit-outer-spin-button,
-input::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
-}
-
-input[type=number] {
-  -moz-appearance: textfield;
+/* 4. Aplicando o fundo escuro e a cor da letra para o projeto inteiro */
+@layer base {
+  body {
+    background-color: #0c0c0e;
+    color: #eeeae0;
+    font-family: var(--font-sans);
+  }
 }
