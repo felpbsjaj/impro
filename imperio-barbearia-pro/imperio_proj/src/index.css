@@ -15,11 +15,13 @@ body {
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
 }
+
 ::-webkit-scrollbar-track {
   @apply bg-transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-zinc-800 rounded-full hover:bg-zinc-700 transition-colors;
 }
@@ -30,25 +32,7 @@ input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type=number] {
   -moz-appearance: textfield;
-}
-
-/* Logo float animation */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-/* Rain canvas for auth bg */
-#rain-canvas {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.4;
-}
-
-/* Syne for headings */
-h1, h2, h3, .font-black, .font-bold {
-  font-family: "Syne", "DM Sans", sans-serif;
 }
