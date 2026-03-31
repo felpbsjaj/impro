@@ -362,19 +362,52 @@ export default function App() {
   }, [filteredRegistros, userData]);
 
   const chartData = useMemo(() => {
-    const days: any = {};
-    for (let i = 6; i >= 0; i--) {
-      const d = format(subDays(new Date(), i), 'dd/MM');
-      days[d] = 0;
-    }
+    const days: Record<string, number> = {};
+    const start = parseISO(dateRange.start);
+    const end = parseISO(dateRange.end);
     
-    filteredRegistros.forEach(r => {
-      const d = format(parseISO(r.data), 'dd/MM');
-      if (days[d] !== undefined) days[d] += r.valorFinal;
-    });
+    // Calcula a diferença de dias entre o início e o fim do filtro
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      // HOJE: Mostra o gráfico por horas (das 08h às 20h)
+      for (let i = 8; i <= 20; i += 2) {
+        days[`${i}h`] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        let hour = 12; // fallback
+        if (r.timestamp?.toDate) {
+          hour = r.timestamp.toDate().getHours();
+        }
+        // Arredonda a hora para o bloco de 2h mais próximo
+        const bucket = Math.max(8, Math.min(20, Math.floor(hour / 2) * 2));
+        days[`${bucket}h`] += r.valorFinal;
+      });
+    } else if (diffDays <= 7) {
+      // 7 DIAS: Mostra os últimos 7 dias no eixo X
+      for (let i = 6; i >= 0; i--) {
+        const d = format(subDays(end, i), 'dd/MM');
+        days[d] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        const d = format(parseISO(r.data), 'dd/MM');
+        if (days[d] !== undefined) days[d] += r.valorFinal;
+      });
+    } else {
+      // 30 DIAS: Mostra os últimos 30 dias no eixo X
+      for (let i = 29; i >= 0; i--) {
+        const d = format(subDays(end, i), 'dd/MM');
+        days[d] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        const d = format(parseISO(r.data), 'dd/MM');
+        if (days[d] !== undefined) days[d] += r.valorFinal;
+      });
+    }
 
     return Object.entries(days).map(([name, value]) => ({ name, value }));
-  }, [filteredRegistros]);
+  }, [filteredRegistros, dateRange]);
 
 
   // ==========================================
@@ -384,7 +417,7 @@ export default function App() {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
         <motion.img 
-          src="/LOGO/barber_logo.png" 
+          src="./LOGO/barber_logo.png" 
           alt="Império" 
           className="w-28 h-28 object-contain drop-shadow-[0_0_30px_rgba(223,185,66,0.3)]"
           animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
@@ -412,7 +445,7 @@ export default function App() {
           {/* Logo e Branding no topo */}
           <div className="text-center mb-8 w-full">
             <motion.img 
-              src="/LOGO/barber_logo.png" 
+              src="./LOGO/barber_logo.png" 
               alt="Império Barbearia" 
               className="w-32 h-32 mx-auto object-contain drop-shadow-[0_0_20px_rgba(223,185,66,0.3)] mb-4"
               animate={{ y: [0, -8, 0] }}
@@ -509,7 +542,7 @@ export default function App() {
         <div className="p-6 mb-2 flex items-center gap-3">
           {/* Logo transparente no menu */}
           <img 
-            src="/LOGO/barber_logo.png" 
+            src="./LOGO/barber_logo.png" 
             alt="Império" 
             className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(223,185,66,0.3)] flex-shrink-0"
           />
