@@ -59,6 +59,881 @@ import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './lib/firebase';
 import { cn, formatCurrency } from './lib/utils';
 import { UserData, Servico, Registro } from './types';
+import { AuthScreen } from './AuthScreen';
+
+// --- Secondary Firebase App for Admin Tasks ---
+const secondaryConfig = {
+  apiKey: "AIzaSyA7ISbwf_RCg_3IRTOboeV1Y9W4_wf8HY4",
+  authDomain: "barb-imperio.firebaseapp.com",
+  projectId: "barb-imperio",
+  storageBucket: "barb-imperio.firebasestorage.app",
+  messagingSenderId: "1011188015253",
+  appId: "1:1011188015253:web:bc824812e8ac6628017b9c"
+};
+
+const getSecondaryAuth = () => {
+  const app = getApps().find(a => a.name === 'secondary') || initializeApp(secondaryConfig, 'secondary');
+  return getAuthClient(app);
+};
+
+// --- Helpers ---
+const hoje = () => format(new Date(), 'yyyy-MM-dd');
+
+// --- Components ---
+
+const StatCard = ({ title, value, subValue, icon: Icon, color }: any) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl backdrop-blur-xl"
+  >
+    <div className="flex justify-between items-start mb-4">
+      <div className="text-xs font-semibold uppercase tracking-wider text-zinc-500">{title}</div>
+      <div className={cn("p-2 rounded-lg", color)}>
+        <Icon size={20} />
+      </div>
+    </div>
+    <div className="text-3xl font-bold text-white tracking-tight">{value}</div>
+    <div className="text-xs text-zinc-400 mt-2 flex items-center gap-1">
+      {subValue}
+    </div>
+  </motion.div>
+);
+
+const Modal = ({ isOpen, onClose, title, children }: any) => (
+  <AnimatePresence>
+    {isOpen && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+        />
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+          className="relative w-full max-w-md bg-zinc-900 border border-white/10 rounded-3xl p-8 shadow-2xl overflow-hidden"
+        >
+          <div className="text-xl font-bold text-white mb-6 text-center">{title}</div>
+          {children}
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+);
+
+// --- Main App ---
+
+export default function App() {
+  const [user, setUser] = useState<any>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activePage, setActivePage] = useState('dashboard');
+  
+  // Auth State
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [authError, setAuthError] = useState('');
+
+  // Data State
+  const [servicos, setServicos] = useState<Servico[]>([]);
+  const [registros, setRegistros] = useState<Registro[]>([]);
+  const [barbeiros, setBarbeiros] = useState<UserData[]>([]);
+  const [dateRange, setDateRange] = useState({ 
+    start: format(subDays(new Date(), 6), 'yyyy-MM-dd'),
+    end: format(new Date(), 'yyyy-MM-dd')
+  });
+
+  // Modals State
+  const [isRegModalOpen, setIsRegModalOpen] = useState(false);
+  const [isBarbeiroModalOpen, setIsBarbeiroModalOpen] = useState(false);
+  const [isServicoModalOpen, setIsServicoModalOpen] = useState(false);
+  
+  const [selectedServico, setSelectedServico] = useState<Servico | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [discount, setDiscount] = useState(0);
+  
+  const [editingBarbeiro, setEditingBarbeiro] = useState<UserData | null>(null);
+  const [editingServico, setEditingServico] = useState<Servico | null>(null);
+
+  // Form States
+  const [barbForm, setBarbForm] = useState({ nome: '', email: '', password: '', sede: 'Matriz', porcentagem: 60 });
+  const [srvForm, setSrvForm] = useState({ nome: '', valor: 0 });
+  const isMounted = React.useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      try {
+        if (user) {
+          const docSnap = await getDoc(doc(db, 'usuarios', user.uid));
+          if (isMounted.current) {
+            if (docSnap.exists()) {
+              setUserData({ uid: user.uid, ...docSnap.data() } as UserData);
+              setUser(user);
+            } else {
+              await signOut(auth);
+            }
+          }
+        } else {
+          if (isMounted.current) {
+            setUser(null);
+            setUserData(null);
+          }
+        }
+      } catch (err: any) {
+        if (err.name !== 'AbortError' && isMounted.current) {
+          console.error("Auth change error:", err);
+        }
+      } finally {
+        if (isMounted.current) {
+          setLoading(false);
+        }
+      }
+    });
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubServicos = onSnapshot(collection(db, 'servicos'), (snap) => {
+      if (isMounted.current) {
+        setServicos(snap.docs.map(d => ({ id: d.id, ...d.data() } as Servico)));
+      }
+    }, (err) => {
+      if (err.name !== 'AbortError') console.error("Servicos snapshot error:", err);
+    });
+
+    const unsubRegistros = onSnapshot(
+      query(collection(db, 'registros'), orderBy('timestamp', 'desc')), 
+      (snap) => {
+        if (isMounted.current) {
+          setRegistros(snap.docs.map(d => ({ id: d.id, ...d.data() } as Registro)));
+        }
+      },
+      (err) => {
+        if (err.name !== 'AbortError') console.error("Registros snapshot error:", err);
+      }
+    );
+
+    const unsubBarbeiros = onSnapshot(collection(db, 'usuarios'), (snap) => {
+      if (isMounted.current) {
+        setBarbeiros(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserData)).filter(u => u.role !== 'admin'));
+      }
+    }, (err) => {
+      if (err.name !== 'AbortError') console.error("Barbeiros snapshot error:", err);
+    });
+
+    return () => {
+      unsubServicos();
+      unsubRegistros();
+      unsubBarbeiros();
+    };
+  }, [user]);
+
+  // --- Handlers ---
+
+  const handleAuthSubmit = async (email: string, password: string, isSignUp: boolean) => {
+    setAuthError('');
+    try {
+      if (isSignUp) {
+        // Sign up logic would go here
+        await signInWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err: any) {
+      setAuthError(err.message || 'Erro ao autenticar. Tente novamente.');
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!selectedServico || !paymentMethod || !userData) return;
+
+    const baseValue = selectedServico.valor;
+    const finalValue = baseValue - discount;
+
+    try {
+      await addDoc(collection(db, 'registros'), {
+        barbeiroId: userData.uid,
+        barbeiroNome: userData.nome,
+        sede: userData.sede || 'Matriz',
+        servicoId: selectedServico.id,
+        servicoNome: selectedServico.nome,
+        valorTabela: baseValue,
+        desconto: discount,
+        valorFinal: finalValue,
+        pagamento: paymentMethod,
+        porcentagem: userData.porcentagem || 100,
+        isOwnerCut: userData.role === 'admin',
+        timestamp: Timestamp.now(),
+        data: hoje()
+      });
+
+      setIsRegModalOpen(false);
+      setSelectedServico(null);
+      setPaymentMethod('');
+      setDiscount(0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleSaveBarbeiro = async () => {
+    if (!barbForm.nome || (!editingBarbeiro && !barbForm.email)) return;
+
+    try {
+      if (editingBarbeiro) {
+        await updateDoc(doc(db, 'usuarios', editingBarbeiro.uid), {
+          nome: barbForm.nome,
+          sede: barbForm.sede,
+          porcentagem: barbForm.porcentagem
+        });
+      } else {
+        const secondaryAuth = getSecondaryAuth();
+        const userCredential = await createUserWithEmailAndPassword(secondaryAuth, barbForm.email, barbForm.password);
+        await setDoc(doc(db, 'usuarios', userCredential.user.uid), {
+          nome: barbForm.nome,
+          email: barbForm.email,
+          role: 'barbeiro',
+          sede: barbForm.sede,
+          porcentagem: barbForm.porcentagem
+        });
+        await signOut(secondaryAuth);
+      }
+      setIsBarbeiroModalOpen(false);
+      setEditingBarbeiro(null);
+      setBarbForm({ nome: '', email: '', password: '', sede: 'Matriz', porcentagem: 60 });
+    } catch (err: any) {
+      alert('Erro ao salvar barbeiro: ' + err.message);
+    }
+  };
+
+  const handleSaveServico = async () => {
+    if (!srvForm.nome || srvForm.valor <= 0) return;
+
+    try {
+      if (editingServico) {
+        await updateDoc(doc(db, 'servicos', editingServico.id), {
+          nome: srvForm.nome,
+          valor: srvForm.valor
+        });
+      } else {
+        await addDoc(collection(db, 'servicos'), {
+          nome: srvForm.nome,
+          valor: srvForm.valor
+        });
+      }
+      setIsServicoModalOpen(false);
+      setEditingServico(null);
+      setSrvForm({ nome: '', valor: 0 });
+    } catch (err: any) {
+      alert('Erro ao salvar serviço: ' + err.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+    } catch (err) {
+      console.error('Erro ao logout:', err);
+    }
+  };
+
+  // --- Memoized Data ---
+
+  const filteredRegistros = useMemo(() => {
+    return registros.filter(r => {
+      return r.data >= dateRange.start && r.data <= dateRange.end;
+    });
+  }, [registros, dateRange]);
+
+  const stats = useMemo(() => {
+    const totalFat = filteredRegistros.reduce((acc, r) => acc + r.valorFinal, 0);
+    let bolso = 0;
+    filteredRegistros.forEach(r => {
+      if (r.barbeiroId === userData?.uid || r.isOwnerCut) {
+        bolso += r.valorFinal;
+      } else {
+        const commissionRate = r.porcentagem || 0;
+        bolso += r.valorFinal * ((100 - commissionRate) / 100);
+      }
+    });
+    const totalDesc = filteredRegistros.reduce((acc, r) => acc + (r.desconto || 0), 0);
+    
+    return { totalFat, bolso, totalDesc, count: filteredRegistros.length };
+  }, [filteredRegistros, userData]);
+
+  const chartData = useMemo(() => {
+    const days: Record<string, number> = {};
+    const start = parseISO(dateRange.start);
+    const end = parseISO(dateRange.end);
+    
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+      for (let i = 8; i <= 20; i += 2) {
+        days[`${i}h`] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        let hour = 12;
+        if (r.timestamp?.toDate) {
+          hour = r.timestamp.toDate().getHours();
+        }
+        const bucket = Math.max(8, Math.min(20, Math.floor(hour / 2) * 2));
+        days[`${bucket}h`] += r.valorFinal;
+      });
+    } else if (diffDays <= 7) {
+      for (let i = 6; i >= 0; i--) {
+        const d = format(subDays(end, i), 'dd/MM');
+        days[d] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        const d = format(parseISO(r.data), 'dd/MM');
+        if (days[d] !== undefined) days[d] += r.valorFinal;
+      });
+    } else {
+      for (let i = 29; i >= 0; i--) {
+        const d = format(subDays(end, i), 'dd/MM');
+        days[d] = 0;
+      }
+      filteredRegistros.forEach(r => {
+        const d = format(parseISO(r.data), 'dd/MM');
+        if (days[d] !== undefined) days[d] += r.valorFinal;
+      });
+    }
+
+    return Object.entries(days).map(([name, value]) => ({ name, value }));
+  }, [filteredRegistros, dateRange]);
+
+  // ==========================================
+  // LOADING SCREEN
+  // ==========================================
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontFamily: 'var(--font-title)', fontSize: '48px', fontWeight: 700, letterSpacing: '2px', background: 'linear-gradient(135deg, var(--gold), var(--gold-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '20px' }}>IMPÉRIO</h1>
+          <div className="spinner"></div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '14px', marginTop: '16px' }}>Carregando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ==========================================
+  // AUTH SCREEN
+  // ==========================================
+  if (!user) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', padding: '24px', flexDirection: 'column', gap: '32px', background: 'radial-gradient(circle at center, rgba(212,175,55,0.05) 0%, var(--bg) 100%)' }}>
+        <div style={{ textAlign: 'center' }}>
+          <h1 style={{ fontFamily: 'var(--font-title)', fontWeight: 700, fontSize: '64px', letterSpacing: '8px', background: 'linear-gradient(135deg, var(--gold), var(--gold-light))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: '1' }}>IMPÉRIO</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '13px', letterSpacing: '2px', textTransform: 'uppercase', marginTop: '8px' }}>Gerenciamento de Barbearia</p>
+        </div>
+        <AuthScreen onSignIn={handleAuthSubmit} error={authError} />
+      </div>
+    );
+  }
+
+  // ==========================================
+  // DASHBOARD PRINCIPAL
+  // ==========================================
+  return (
+    <div className="min-h-screen bg-black text-zinc-300 flex font-sans">
+      
+      {/* Sidebar */}
+      <aside className="w-72 border-r border-white/5 flex flex-col sticky top-0 h-screen bg-zinc-950/50 backdrop-blur-xl">
+        <div className="p-6 mb-2 flex items-center gap-3">
+          <img 
+            src="./LOGO/barber_logo.png" 
+            alt="Império" 
+            className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(223,185,66,0.3)] flex-shrink-0"
+          />
+          <div>
+            <div className="text-lg font-black text-[#dfb942] tracking-widest leading-tight">IMPÉRIO</div>
+            <div className="text-[9px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Barbearia</div>
+          </div>
+        </div>
+
+        <nav className="flex-1 px-4 space-y-2">
+          <div className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold px-4 mb-4 mt-8">Principal</div>
+          
+          <button 
+            onClick={() => setActivePage('dashboard')}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all group",
+              activePage === 'dashboard' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <LayoutDashboard size={20} />
+            <span className="font-semibold text-sm">Dashboard</span>
+          </button>
+
+          <button 
+            onClick={() => setActivePage('meus-cortes')}
+            className={cn(
+              "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all group",
+              activePage === 'meus-cortes' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+            )}
+          >
+            <Scissors size={20} />
+            <span className="font-semibold text-sm">Meus Cortes</span>
+          </button>
+
+          {userData?.role === 'admin' && (
+            <>
+              <div className="text-[10px] text-zinc-700 uppercase tracking-widest font-bold px-4 mb-4 mt-8">Admin</div>
+              
+              <button 
+                onClick={() => setActivePage('relatorio')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all group",
+                  activePage === 'relatorio' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <BarChart3 size={20} />
+                <span className="font-semibold text-sm">Relatório</span>
+              </button>
+
+              <button 
+                onClick={() => setActivePage('barbeiros')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all group",
+                  activePage === 'barbeiros' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <Users size={20} />
+                <span className="font-semibold text-sm">Barbeiros</span>
+              </button>
+
+              <button 
+                onClick={() => setActivePage('servicos')}
+                className={cn(
+                  "w-full flex items-center gap-3 px-4 py-4 rounded-2xl transition-all group",
+                  activePage === 'servicos' ? "bg-amber-500/10 text-amber-500 border border-amber-500/20" : "text-zinc-500 hover:text-white hover:bg-white/5"
+                )}
+              >
+                <Tags size={20} />
+                <span className="font-semibold text-sm">Serviços</span>
+              </button>
+            </>
+          )}
+        </nav>
+
+        <div className="border-t border-white/5 p-4">
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-4 rounded-2xl text-red-400 hover:bg-red-500/10 transition-all"
+          >
+            <LogOut size={20} />
+            <span className="font-semibold text-sm">Sair</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-auto">
+        {/* Header */}
+        <div className="sticky top-0 z-40 border-b border-white/5 bg-zinc-950/50 backdrop-blur-xl px-8 py-6 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-white">
+              {activePage === 'dashboard' && 'Dashboard'}
+              {activePage === 'meus-cortes' && 'Meus Cortes'}
+              {activePage === 'relatorio' && 'Relatório'}
+              {activePage === 'barbeiros' && 'Barbeiros'}
+              {activePage === 'servicos' && 'Serviços'}
+            </h1>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="text-sm text-zinc-400">
+              <div className="text-zinc-300 font-medium">{userData?.nome}</div>
+              <div className="text-[10px] uppercase tracking-wider">{userData?.role === 'admin' ? 'Administrador' : 'Barbeiro'}</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="p-8">
+          {activePage === 'dashboard' && (
+            <div className="space-y-8">
+              {/* Stats */}
+              <div className="grid grid-cols-2 gap-6">
+                <StatCard 
+                  title="Total de Cortes"
+                  value={stats.count}
+                  subValue={`R$ ${formatCurrency(stats.totalFat)}`}
+                  icon={Scissors}
+                  color="bg-blue-500/20 text-blue-400"
+                />
+                <StatCard 
+                  title="Total Faturado"
+                  value={`R$ ${formatCurrency(stats.totalFat)}`}
+                  subValue="Período selecionado"
+                  icon={TrendingUp}
+                  color="bg-green-500/20 text-green-400"
+                />
+                <StatCard 
+                  title="Meu Bolso"
+                  value={`R$ ${formatCurrency(stats.bolso)}`}
+                  subValue="Disponível"
+                  icon={Wallet}
+                  color="bg-amber-500/20 text-amber-400"
+                />
+                <StatCard 
+                  title="Total em Descontos"
+                  value={`R$ ${formatCurrency(stats.totalDesc)}`}
+                  subValue="Concedidos"
+                  icon={Percent}
+                  color="bg-red-500/20 text-red-400"
+                />
+              </div>
+
+              {/* Chart */}
+              <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-2xl backdrop-blur-xl">
+                <h2 className="text-lg font-bold text-white mb-6">Faturamento</h2>
+                <ResponsiveContainer width="100%" height={300}>
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+                    <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
+                    <YAxis stroke="rgba(255,255,255,0.5)" />
+                    <Tooltip 
+                      contentStyle={{background: 'rgba(0,0,0,0.8)', border: '1px solid rgba(255,255,255,0.1)'}}
+                      formatter={(value: any) => `R$ ${formatCurrency(value)}`}
+                    />
+                    <Area type="monotone" dataKey="value" stroke="#f59e0b" fillOpacity={1} fill="url(#colorValue)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* New Register Button */}
+              <button 
+                onClick={() => setIsRegModalOpen(true)}
+                className="w-full py-4 px-6 bg-gradient-to-r from-amber-500 to-amber-400 text-black rounded-2xl font-bold text-lg hover:shadow-lg hover:shadow-amber-500/20 transition-all"
+              >
+                <Plus className="inline mr-2" size={20} />
+                Registrar Novo Corte
+              </button>
+
+              {/* Recent Registrations */}
+              <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-2xl backdrop-blur-xl">
+                <h2 className="text-lg font-bold text-white mb-6">Cortes Recentes</h2>
+                <div className="space-y-3">
+                  {filteredRegistros.slice(0, 5).map(r => (
+                    <div key={r.id} className="bg-zinc-800/50 p-4 rounded-lg flex justify-between items-center hover:bg-zinc-700/50 transition-all">
+                      <div>
+                        <div className="text-white font-semibold">{r.servicoNome}</div>
+                        <div className="text-xs text-zinc-500">{r.barbeiroNome} • {r.pagamento}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-amber-400 font-bold">R$ {formatCurrency(r.valorFinal)}</div>
+                        <div className="text-xs text-zinc-500">{format(parseISO(r.data), 'dd/MM HH:mm', { locale: ptBR })}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePage === 'meus-cortes' && (
+            <div className="space-y-6">
+              <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-2xl backdrop-blur-xl">
+                <h2 className="text-lg font-bold text-white mb-6">Histórico de Cortes</h2>
+                <div className="space-y-3">
+                  {filteredRegistros
+                    .filter(r => r.barbeiroId === userData?.uid || (userData?.role === 'admin' && r.isOwnerCut))
+                    .map(r => (
+                    <div key={r.id} className="bg-zinc-800/50 p-4 rounded-lg flex justify-between items-center hover:bg-zinc-700/50 transition-all">
+                      <div>
+                        <div className="text-white font-semibold">{r.servicoNome}</div>
+                        <div className="text-xs text-zinc-500">{r.pagamento} • {format(parseISO(r.data), 'dd/MM HH:mm', { locale: ptBR })}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-green-400 font-bold">R$ {formatCurrency(r.valorFinal)}</div>
+                        {r.desconto > 0 && <div className="text-xs text-amber-400">- R$ {formatCurrency(r.desconto)}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePage === 'relatorio' && userData?.role === 'admin' && (
+            <div className="space-y-6">
+              <button 
+                onClick={() => setIsBarbeiroModalOpen(true)}
+                className="px-6 py-3 bg-amber-500/20 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 transition-all border border-amber-500/20"
+              >
+                <Plus className="inline mr-2" size={18} />
+                Adicionar Barbeiro
+              </button>
+
+              <div className="bg-zinc-900/50 border border-white/5 p-8 rounded-2xl backdrop-blur-xl">
+                <h2 className="text-lg font-bold text-white mb-6">Barbeiros</h2>
+                <div className="space-y-4">
+                  {barbeiros.map(barb => {
+                    const barbReg = filteredRegistros.filter(r => r.barbeiroId === barb.uid);
+                    const barbTotal = barbReg.reduce((a, r) => a + r.valorFinal, 0);
+                    return (
+                      <div key={barb.uid} className="bg-zinc-800/50 p-4 rounded-lg">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <div className="text-white font-semibold">{barb.nome}</div>
+                            <div className="text-xs text-zinc-500">{barb.sede} • {barb.porcentagem}% comissão</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-green-400 font-bold">R$ {formatCurrency(barbTotal)}</div>
+                            <div className="text-xs text-zinc-500">{barbReg.length} cortes</div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {activePage === 'barbeiros' && userData?.role === 'admin' && (
+            <div className="space-y-6">
+              <button 
+                onClick={() => {
+                  setEditingBarbeiro(null);
+                  setBarbForm({ nome: '', email: '', password: '', sede: 'Matriz', porcentagem: 60 });
+                  setIsBarbeiroModalOpen(true);
+                }}
+                className="px-6 py-3 bg-amber-500/20 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 transition-all border border-amber-500/20"
+              >
+                <Plus className="inline mr-2" size={18} />
+                Novo Barbeiro
+              </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                {barbeiros.map(barb => (
+                  <div key={barb.uid} className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl backdrop-blur-xl hover:border-amber-500/30 transition-all">
+                    <div className="text-white font-semibold mb-2">{barb.nome}</div>
+                    <div className="text-xs text-zinc-500 mb-4">
+                      <div>{barb.sede}</div>
+                      <div>{barb.porcentagem}% de comissão</div>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        setEditingBarbeiro(barb);
+                        setBarbForm({ ...barb, password: '' });
+                        setIsBarbeiroModalOpen(true);
+                      }}
+                      className="text-sm text-amber-400 hover:text-amber-300"
+                    >
+                      Editar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activePage === 'servicos' && userData?.role === 'admin' && (
+            <div className="space-y-6">
+              <button 
+                onClick={() => {
+                  setEditingServico(null);
+                  setSrvForm({ nome: '', valor: 0 });
+                  setIsServicoModalOpen(true);
+                }}
+                className="px-6 py-3 bg-amber-500/20 text-amber-400 rounded-lg font-medium hover:bg-amber-500/30 transition-all border border-amber-500/20"
+              >
+                <Plus className="inline mr-2" size={18} />
+                Novo Serviço
+              </button>
+
+              <div className="grid grid-cols-2 gap-4">
+                {servicos.map(srv => (
+                  <div key={srv.id} className="bg-zinc-900/50 border border-white/5 p-6 rounded-2xl backdrop-blur-xl hover:border-amber-500/30 transition-all">
+                    <div className="text-white font-semibold mb-2">{srv.nome}</div>
+                    <div className="text-amber-400 text-xl font-bold mb-4">R$ {formatCurrency(srv.valor)}</div>
+                    <button 
+                      onClick={() => {
+                        setEditingServico(srv);
+                        setSrvForm(srv);
+                        setIsServicoModalOpen(true);
+                      }}
+                      className="text-sm text-amber-400 hover:text-amber-300 mr-4"
+                    >
+                      Editar
+                    </button>
+                    <button 
+                      onClick={async () => {
+                        if (window.confirm('Deletar este serviço?')) {
+                          await deleteDoc(doc(db, 'servicos', srv.id));
+                        }
+                      }}
+                      className="text-sm text-red-400 hover:text-red-300"
+                    >
+                      Deletar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Modals */}
+      <Modal isOpen={isRegModalOpen} onClose={() => setIsRegModalOpen(false)} title="Registrar Corte">
+        <div className="space-y-6">
+          <div className="space-y-3">
+            {servicos.map(srv => (
+              <button
+                key={srv.id}
+                onClick={() => setSelectedServico(srv)}
+                className={cn(
+                  "w-full p-4 rounded-xl transition-all text-left",
+                  selectedServico?.id === srv.id 
+                    ? "bg-amber-500/20 border border-amber-500 text-white"
+                    : "bg-zinc-800 border border-zinc-700 text-zinc-300 hover:border-amber-500/50"
+                )}
+              >
+                <div className="font-semibold">{srv.nome}</div>
+                <div className="text-sm text-amber-400">R$ {formatCurrency(srv.valor)}</div>
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-zinc-400">Método de Pagamento</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['PIX', 'Dinheiro', 'Crédito', 'Débito'].map(m => (
+                <button
+                  key={m}
+                  onClick={() => setPaymentMethod(m)}
+                  className={cn(
+                    "p-3 rounded-lg transition-all text-sm font-medium",
+                    paymentMethod === m
+                      ? "bg-amber-500/20 border border-amber-500 text-amber-400"
+                      : "bg-zinc-800 border border-zinc-700 text-zinc-400 hover:border-amber-500/50"
+                  )}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm text-zinc-400">Desconto (R$)</label>
+            <input
+              type="number"
+              value={discount}
+              onChange={(e) => setDiscount(Math.max(0, parseFloat(e.target.value) || 0))}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+            />
+          </div>
+
+          {selectedServico && (
+            <div className="bg-amber-500/10 border border-amber-500/30 p-4 rounded-lg">
+              <div className="text-sm text-zinc-400 mb-2">Total</div>
+              <div className="text-2xl font-bold text-amber-400">R$ {formatCurrency(selectedServico.valor - discount)}</div>
+            </div>
+          )}
+
+          <button
+            onClick={handleRegister}
+            disabled={!selectedServico || !paymentMethod}
+            className="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-400 text-black rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 disabled:opacity-50 transition-all"
+          >
+            Confirmar
+          </button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isBarbeiroModalOpen} onClose={() => setIsBarbeiroModalOpen(false)} title={editingBarbeiro ? 'Editar Barbeiro' : 'Novo Barbeiro'}>
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Nome"
+            value={barbForm.nome}
+            onChange={(e) => setBarbForm({...barbForm, nome: e.target.value})}
+            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+          />
+          {!editingBarbeiro && (
+            <input
+              type="email"
+              placeholder="Email"
+              value={barbForm.email}
+              onChange={(e) => setBarbForm({...barbForm, email: e.target.value})}
+              className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+            />
+          )}
+          <input
+            type="text"
+            placeholder="Sede"
+            value={barbForm.sede}
+            onChange={(e) => setBarbForm({...barbForm, sede: e.target.value})}
+            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+          />
+          <input
+            type="number"
+            placeholder="Porcentagem"
+            value={barbForm.porcentagem}
+            onChange={(e) => setBarbForm({...barbForm, porcentagem: parseFloat(e.target.value) || 0})}
+            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+          />
+          <button
+            onClick={handleSaveBarbeiro}
+            className="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-400 text-black rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 transition-all"
+          >
+            Salvar
+          </button>
+        </div>
+      </Modal>
+
+      <Modal isOpen={isServicoModalOpen} onClose={() => setIsServicoModalOpen(false)} title={editingServico ? 'Editar Serviço' : 'Novo Serviço'}>
+        <div className="space-y-4">
+          <input
+            type="text"
+            placeholder="Nome do Serviço"
+            value={srvForm.nome}
+            onChange={(e) => setSrvForm({...srvForm, nome: e.target.value})}
+            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+          />
+          <input
+            type="number"
+            placeholder="Valor"
+            value={srvForm.valor}
+            onChange={(e) => setSrvForm({...srvForm, valor: parseFloat(e.target.value) || 0})}
+            className="w-full px-4 py-2 bg-zinc-800 border border-zinc-700 text-white rounded-lg outline-none focus:border-amber-500"
+          />
+          <button
+            onClick={handleSaveServico}
+            className="w-full py-3 px-6 bg-gradient-to-r from-amber-500 to-amber-400 text-black rounded-lg font-bold hover:shadow-lg hover:shadow-amber-500/20 transition-all"
+          >
+            Salvar
+          </button>
+        </div>
+      </Modal>
+    </div>
+  );
+}
 
 // --- Secondary Firebase App for Admin Tasks ---
 const secondaryConfig = {
@@ -433,102 +1308,23 @@ export default function App() {
   // ==========================================
   // NOVA TELA DE LOGIN PREMIUM (BASEADA NO CSS ENVIADO)
   // ==========================================
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6 relative overflow-hidden bg-[#050505] font-sans">
-        
-        {/* Fundo sutil inspirado na 3ª foto */}
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(212,175,55,0.05)_0%,_#050505_100%)] z-0"></div>
+  <div id="auth-screen">
+  <div class="auth-bg"><canvas id="auth-canvas"></canvas></div>
+  <div class="auth-content">
+    <div class="auth-logo">
+      <img class="auth-logo-img" src="LOGO/barber_logo.png" alt="Império Barbearia">
+      <h1>IMPÉRIO</h1>
+      <p>Painel Administrativo</p>
+    </div>
+    <div class="auth-card">
+      <h2>Acesso Admin</h2>
+      <div class="field"><label>E-mail</label><input class="input-f" type="email" id="auth-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="field"><label>Senha</label><input class="input-f" type="password" id="auth-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <p class="auth-error" id="auth-error"></p>
+      <button class="btn-confirm" onclick="doLogin()"><i class="bi bi-box-arrow-in-right"></i> ENTRAR</button>
+      <p class="auth-hint"><i class="bi bi-shield-lock"></i> Acesso restrito ao administrador</p>
+    </div>
 
-        <div className="relative z-10 w-full max-w-[420px] flex flex-col items-center">
-          
-          {/* Logo e Branding no topo */}
-          <div className="text-center mb-8 w-full">
-            <motion.img 
-              src="./LOGO/barber_logo.png" 
-              alt="Império Barbearia" 
-              className="w-32 h-32 mx-auto object-contain drop-shadow-[0_0_20px_rgba(223,185,66,0.3)] mb-4"
-              animate={{ y: [0, -8, 0] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-[0.2em] uppercase bg-gradient-to-br from-[#dfb942] to-[#f5de8c] bg-clip-text text-transparent leading-none">
-              Império
-            </h1>
-            <p className="mt-4 text-zinc-500 text-[11px] md:text-xs tracking-[0.25em] uppercase font-bold">
-              Gestão Profissional
-            </p>
-          </div>
-
-          {/* Cartão de Login (Glassmorphism Escuro) */}
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="w-full bg-[#0f0f11]/90 backdrop-blur-xl border border-white/10 rounded-[20px] p-8 md:p-10 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)]"
-          >
-            <h2 className="text-2xl font-bold text-white mb-8 tracking-wide">
-              Acesse sua conta
-            </h2>
-
-            <form onSubmit={handleLogin} className="space-y-6">
-              
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block">
-                  E-mail
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-[10px] text-white placeholder-zinc-600 focus:outline-none focus:border-[#dfb942] focus:ring-1 focus:ring-[#dfb942]/30 transition-all text-sm"
-                  placeholder="seu@email.com"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest block">
-                  Senha
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-3.5 bg-black/20 border border-white/10 rounded-[10px] text-white placeholder-zinc-600 focus:outline-none focus:border-[#dfb942] focus:ring-1 focus:ring-[#dfb942]/30 transition-all text-sm"
-                  placeholder="••••••••"
-                  required
-                />
-              </div>
-
-              {authError && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  className="text-[#ef4444] text-xs text-center font-medium bg-[#ef4444]/10 py-2 rounded-lg"
-                >
-                  {authError}
-                </motion.div>
-              )}
-
-              <button
-                type="submit"
-                className="w-full mt-2 bg-gradient-to-br from-[#dfb942] to-[#f5de8c] text-black font-bold text-lg tracking-widest py-4 rounded-[10px] transition-all hover:translate-y-[-2px] shadow-[0_4px_14px_rgba(212,175,55,0.25)] hover:shadow-[0_6px_20px_rgba(212,175,55,0.4)] flex justify-center items-center gap-2"
-              >
-                <LogOut className="w-5 h-5 rotate-180" />
-                ENTRAR
-              </button>
-            </form>
-
-            {/* Mensagem Universal de Segurança */}
-            <div className="mt-8 flex items-center justify-center gap-2 text-zinc-500 text-xs">
-              <Lock className="w-3.5 h-3.5" />
-              <span>Acesso seguro ao sistema</span>
-            </div>
-          </motion.div>
-          
-        </div>
-      </div>
-    );
   }
 
   // ==========================================

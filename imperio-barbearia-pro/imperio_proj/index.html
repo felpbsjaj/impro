@@ -8,7 +8,25 @@
     <title>Gerenciamento • IMPÉRIO</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- Loading Screen -->
+    <div id="loading">
+      <h1>IMPÉRIO</h1>
+      <div class="spinner"></div>
+      <p>Carregando...</p>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="auth-screen">
+      <div class="auth-logo">
+        <h1>IMPÉRIO</h1>
+        <p>Gerenciamento de Barbearia</p>
+      </div>
+      <div id="auth-container"></div>
+    </div>
+
+    <!-- App -->
+    <div id="app"></div>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
