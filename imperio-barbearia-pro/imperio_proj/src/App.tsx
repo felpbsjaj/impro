@@ -34,15 +34,11 @@ import {
   TrendingUp,
   Wallet,
   CheckCircle2,
-  AlertCircle,
-  ChevronRight,
+  Percent,     
+  Lock,
   QrCode,
   Banknote,
-  CreditCard,
-  Percent,
-  Mail,         
-  Lock,         
-  ArrowRight    
+  CreditCard 
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -212,76 +208,68 @@ export default function App() {
   // Form States
   const [barbForm, setBarbForm] = useState({ nome: '', email: '', password: '', sede: 'Matriz', porcentagem: 60 });
   const [srvForm, setSrvForm] = useState({ nome: '', valor: 0 });
-  const isMounted = React.useRef(true);
 
   useEffect(() => {
-    isMounted.current = true;
-    return () => {
-      isMounted.current = false;
-    };
-  }, []);
+    // Fallback de segurança: desativa o carregamento após 5 segundos se o firebase falhar silenciosamente
+    const safeLoadTimer = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       try {
-        if (user) {
-          const docSnap = await getDoc(doc(db, 'usuarios', user.uid));
-          if (isMounted.current) {
-            if (docSnap.exists()) {
-              setUserData({ uid: user.uid, ...docSnap.data() } as UserData);
-              setUser(user);
-            } else {
-              await signOut(auth);
-            }
-          }
-        } else {
-          if (isMounted.current) {
+        if (currentUser) {
+          const docSnap = await getDoc(doc(db, 'usuarios', currentUser.uid));
+          if (docSnap.exists()) {
+            setUserData({ uid: currentUser.uid, ...docSnap.data() } as UserData);
+            setUser(currentUser);
+          } else {
+            await signOut(auth);
             setUser(null);
             setUserData(null);
           }
+        } else {
+          setUser(null);
+          setUserData(null);
         }
       } catch (err: any) {
-        if (err.name !== 'AbortError' && isMounted.current) {
-          console.error("Auth change error:", err);
-        }
+        console.error("Erro na mudança de autenticação:", err);
+        setUser(null);
+        setUserData(null);
       } finally {
-        if (isMounted.current) {
-          setLoading(false);
-        }
+        clearTimeout(safeLoadTimer);
+        setLoading(false);
       }
     });
-    return unsubscribe;
+
+    return () => {
+      clearTimeout(safeLoadTimer);
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
     if (!user) return;
 
     const unsubServicos = onSnapshot(collection(db, 'servicos'), (snap) => {
-      if (isMounted.current) {
-        setServicos(snap.docs.map(d => ({ id: d.id, ...d.data() } as Servico)));
-      }
+      setServicos(snap.docs.map(d => ({ id: d.id, ...d.data() } as Servico)));
     }, (err) => {
-      if (err.name !== 'AbortError') console.error("Servicos snapshot error:", err);
+      console.error("Servicos snapshot error:", err);
     });
 
     const unsubRegistros = onSnapshot(
       query(collection(db, 'registros'), orderBy('timestamp', 'desc')), 
       (snap) => {
-        if (isMounted.current) {
-          setRegistros(snap.docs.map(d => ({ id: d.id, ...d.data() } as Registro)));
-        }
+        setRegistros(snap.docs.map(d => ({ id: d.id, ...d.data() } as Registro)));
       },
       (err) => {
-        if (err.name !== 'AbortError') console.error("Registros snapshot error:", err);
+        console.error("Registros snapshot error:", err);
       }
     );
 
     const unsubBarbeiros = onSnapshot(collection(db, 'usuarios'), (snap) => {
-      if (isMounted.current) {
-        setBarbeiros(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserData)).filter(u => u.role !== 'admin'));
-      }
+      setBarbeiros(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserData)).filter(u => u.role !== 'admin'));
     }, (err) => {
-      if (err.name !== 'AbortError') console.error("Barbeiros snapshot error:", err);
+      console.error("Barbeiros snapshot error:", err);
     });
 
     return () => {
@@ -460,26 +448,31 @@ export default function App() {
 
 
   // ==========================================
-  // TELA DE CARREGAMENTO ATUALIZADA
+  // TELA DE CARREGAMENTO ATUALIZADA (FALLBACK DE IMAGEM INCLUÍDO)
   // ==========================================
   if (loading) {
     return (
       <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center gap-6">
-        <motion.img 
-          src="./barber_logo.png" 
-          alt="Império" 
-          className="w-28 h-28 object-contain drop-shadow-[0_0_30px_rgba(223,185,66,0.3)]"
+        <motion.div 
+          className="flex flex-col items-center justify-center gap-4"
           animate={{ scale: [1, 1.05, 1], opacity: [0.8, 1, 0.8] }}
           transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <div className="w-10 h-10 border-2 border-[#dfb942]/20 border-t-[#dfb942] rounded-full animate-spin" />
+        >
+          {/* Logo Fallback substituindo img caso o arquivo não exista */}
+          <div className="w-20 h-20 bg-zinc-900 rounded-full flex items-center justify-center border border-[#dfb942]/20 shadow-[0_0_30px_rgba(223,185,66,0.15)]">
+            <Scissors size={40} className="text-[#dfb942]" />
+          </div>
+          <h1 className="text-4xl font-black text-[#dfb942] tracking-widest drop-shadow-[0_0_15px_rgba(223,185,66,0.3)]">IMPÉRIO</h1>
+        </motion.div>
+        
+        <div className="w-8 h-8 border-2 border-[#dfb942]/20 border-t-[#dfb942] rounded-full animate-spin mt-4" />
         <div className="text-zinc-500 text-[10px] uppercase tracking-[0.3em] font-bold">Carregando...</div>
       </div>
     );
   }
 
   // ==========================================
-  // NOVA TELA DE LOGIN PREMIUM (CONVERTIDA PARA JSX)
+  // NOVA TELA DE LOGIN PREMIUM
   // ==========================================
   if (!user) {
     return (
@@ -489,7 +482,9 @@ export default function App() {
         </div>
         <div className="relative z-10 w-full max-w-md flex flex-col items-center gap-8">
           <div className="text-center flex flex-col items-center">
-            <img className="w-24 h-24 object-contain drop-shadow-[0_0_30px_rgba(223,185,66,0.3)] mb-6" src="./LOGO/barber_logo.png" alt="Império Barbearia" />
+            <div className="w-24 h-24 bg-zinc-900 rounded-full flex items-center justify-center border border-[#dfb942]/20 shadow-[0_0_30px_rgba(223,185,66,0.15)] mb-6">
+              <Scissors size={48} className="text-[#dfb942]" />
+            </div>
             <h1 className="text-4xl font-black text-[#dfb942] tracking-widest">IMPÉRIO</h1>
             <p className="text-xs text-zinc-500 uppercase tracking-[0.2em] font-bold mt-2">Painel Administrativo</p>
           </div>
@@ -549,12 +544,10 @@ export default function App() {
       
       {/* Sidebar */}
       <aside className="w-72 border-r border-white/5 flex flex-col sticky top-0 h-screen bg-zinc-950/50 backdrop-blur-xl">
-        <div className="p-6 mb-2 flex items-center gap-3">
-          <img 
-            src="./barber_logo.png" 
-            alt="Império" 
-            className="w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(223,185,66,0.3)] flex-shrink-0"
-          />
+        <div className="p-6 mb-2 flex items-center gap-4">
+          <div className="w-12 h-12 bg-zinc-900 rounded-xl flex items-center justify-center border border-[#dfb942]/20 shadow-[0_0_10px_rgba(223,185,66,0.1)] flex-shrink-0">
+            <Scissors size={24} className="text-[#dfb942]" />
+          </div>
           <div>
             <div className="text-lg font-black text-[#dfb942] tracking-widest leading-tight">IMPÉRIO</div>
             <div className="text-[9px] text-zinc-600 uppercase tracking-[0.2em] font-bold">Barbearia</div>
@@ -629,7 +622,7 @@ export default function App() {
         <div className="p-6 border-t border-white/5">
           <div className="bg-white/5 p-4 rounded-2xl flex items-center gap-3">
             <div className="w-10 h-10 bg-[#dfb942] rounded-xl flex items-center justify-center text-black font-bold">
-              {userData?.nome?.[0].toUpperCase()}
+              {userData?.nome?.[0]?.toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold text-white truncate">{userData?.nome}</div>
